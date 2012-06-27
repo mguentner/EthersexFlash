@@ -27,42 +27,42 @@
 
 class QTftpConnection : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 
 
 
-	enum State {
-	    Idle,
-	    Unconnected,
-	    HostLookup,
-	    Connecting,
-	    Connected,
-	    Closing
-	};
+    enum State {
+        Idle,
+        Unconnected,
+        HostLookup,
+        Connecting,
+        Connected,
+        Closing
+    };
 
 
-	enum TransferType {
-	    NetAscii,
-	    Octet,
-	    Mail
-	};
-	enum Command {
-	    Read,
-	    Write
-	};
+    enum TransferType {
+        NetAscii,
+        Octet,
+        Mail
+    };
+    enum Command {
+        Read,
+        Write
+    };
 public:
-	explicit QTftpConnection(QObject *parent = 0);
-	void initSocket();
-	void readPendingDatagrams();
+    explicit QTftpConnection(QObject *parent = 0);
+    void initSocket();
+    void readPendingDatagrams();
 
 
 public slots:
 private slots:
-	void socketStateChanged(int state);
+    void socketStateChanged(int state);
 private:
-	QUdpSocket *m_udpSocket;
-	State m_State;
+    QUdpSocket *m_udpSocket;
+    State m_State;
 
 };
 
