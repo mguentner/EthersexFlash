@@ -21,6 +21,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QSettings>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -34,29 +35,13 @@ MainWindow::MainWindow(QWidget *parent) :
     QCoreApplication::setApplicationName("EthersexFlash");
     ui->setupUi(this);
     setWindowIcon(QIcon(":/icons/bunnies.png"));
-    /* Restore history */
-    QSettings settings;
-    QStringList devices = settings.value("devices").toStringList();
-    ui->targetLine->addItems(devices);
-    if (ui->targetLine->count() == 0)
-        ui->targetLine->addItem("192.168.0.90");
-    QString lastImage = settings.value("lastImage").toString();
-    if (lastImage != "")
-        ui->imageLine->setText(lastImage);
-    /* Restore done */
     setupSignalsAndSlots();
+    QTimer::singleShot(0, this, SLOT(restoreSettings()));
 }
 
 MainWindow::~MainWindow()
 {
-    /* Save device */
-    QSettings settings;
-    QStringList devices;
-    for ( qint16 i=0; i < ui->targetLine->count(); i++) {
-        devices.append(ui->targetLine->itemText(i));
-    }
-    settings.setValue("lastImage", ui->imageLine->text());
-    settings.setValue("devices", devices);
+    saveSettings();
     delete ui;
     if (m_file == NULL)
         return;
@@ -69,7 +54,7 @@ MainWindow::~MainWindow()
 void MainWindow::setupSignalsAndSlots()
 {
     connect(this, SIGNAL(imageFilenameChanged(QString)), this, SLOT(processFilenameChange(QString)));
-    connect(ui->imageLine, SIGNAL(textEdited(QString)), this, SLOT(processFilenameChange(QString)));
+    connect(ui->imageLine, SIGNAL(textChanged(QString)), this, SLOT(processFilenameChange(QString)));
     connect(m_tftp, SIGNAL(stateChanged(QTftp::State)), this, SLOT(tftpState(QTftp::State)));
     connect(m_tftp, SIGNAL(dataTransferProgress(qint64,qint64)), this, SLOT(updateDataTransferProgress(qint64,qint64)));
     connect(m_tftp, SIGNAL(done(bool)), this, SLOT(tftpDone(bool)));
@@ -78,9 +63,12 @@ void MainWindow::setupSignalsAndSlots()
 
 void MainWindow::on_imageBrowseButton_clicked()
 {
-    emit imageFilenameChanged(QFileDialog::getOpenFileName(this,tr("Open Image")));
+    QDir directory = QFileInfo(m_filename).dir();
+    if (directory.exists())
+        emit imageFilenameChanged(QFileDialog::getOpenFileName(this,tr("Open Image"), directory.absolutePath()));
+    else
+        emit imageFilenameChanged(QFileDialog::getOpenFileName(this,tr("Open Image")));
 }
-
 void MainWindow::processFilenameChange(QString filename)
 {
     QPalette imageLinePalette = QApplication::palette();
@@ -163,4 +151,30 @@ void MainWindow::on_targetLine_textChanged(const QString &arg1)
 {
     Q_UNUSED(arg1);
     m_tftp->disconnectFromHost();
+}
+
+void MainWindow::restoreSettings()
+{
+    /* Restore history */
+    QSettings settings;
+    QStringList devices = settings.value("devices").toStringList();
+    ui->targetLine->addItems(devices);
+    if (ui->targetLine->count() == 0)
+        ui->targetLine->addItem("192.168.0.90");
+    QString lastImage = settings.value("lastImage").toString();
+    if (lastImage != "")
+        ui->imageLine->setText(lastImage);
+    /* Restore done */
+}
+
+void MainWindow::saveSettings()
+{
+    /* Save device */
+    QSettings settings;
+    QStringList devices;
+    for ( qint16 i=ui->targetLine->count()-1; i >= 0 ; i--) {
+        devices.append(ui->targetLine->itemText(i));
+    }
+    settings.setValue("lastImage", ui->imageLine->text());
+    settings.setValue("devices", devices);
 }

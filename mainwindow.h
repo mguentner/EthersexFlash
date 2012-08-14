@@ -29,8 +29,9 @@ private slots:
     void tftpHandleError(QTftp::ErrorCode ,const QString &message);
     void on_flashButton_clicked();
     void updateDataTransferProgress(qint64 readBytes, qint64 totalBytes);
-
     void on_targetLine_textChanged(const QString &arg1);
+    void restoreSettings();
+    void saveSettings();
 
 signals:
     void imageFilenameChanged(QString filename);
